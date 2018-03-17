@@ -5,12 +5,18 @@ var budgetController = (function() {
 
 //?--------- UI CONTROLLER ----------
 var UIController = (function() {
+  //* put all strings into one object.  it's easier to manage, and if string names change later, you don't need to find them throughout the app.  plus helps prevent misspellings, etc.
   var DOMStrings = {
     inputType: '.add__type',
     inputDescription: '.add__description',
     inputValue: '.add__value',
     inputBtn: '.add__btn',
   };
+
+  //* prevents direct access to DOMStrings object
+  function getDOMStrings() {
+    return DOMStrings;
+  }
 
   function getInput() {
     return {
@@ -20,37 +26,45 @@ var UIController = (function() {
     };
   }
 
-  function getDOMStrings() {
-    return DOMStrings;
-  }
-
   return {
-    getInput: getInput,
     getDOMStrings: getDOMStrings,
+    getInput: getInput,
   };
 })();
 
 //?--------- APP CONTROLLER ----------
 var controller = (function(budgetCtrl, UICtrl) {
-  var DOM = UICtrl.getDOMStrings();
+  //* improved organization and debugging of similar code
+  function setupEventListeners() {
+    var DOM = UICtrl.getDOMStrings();
 
-  var ctrlAddItem = function() {
+    document.querySelector(DOM.inputBtn).addEventListener('click', ctrlAddItem);
+
+    //* 'ENTER' key can trigger input (regardless of current focus)
+    document.addEventListener('keypress', function(event) {
+      //* use 'event.which' for older browsers
+      if (event.keyCode === 13 || event.which === 13) {
+        ctrlAddItem();
+      }
+    });
+  }
+
+  function ctrlAddItem() {
     // 1. Get input data
     var input = UICtrl.getInput();
-    console.log(input);
     // 2. Add item to the budget controller
     // 3. Add item to the UI
     // 4. Calculate the budget
     // 5. Display the budget in the UI
+  }
+
+  function init() {
+    setupEventListeners();
+  }
+
+  return {
+    init: init,
   };
-
-  document.querySelector(DOM.inputBtn).addEventListener('click', ctrlAddItem);
-
-  //* enables the 'ENTER' key to also trigger the input (regardless of what's in focus)
-  document.addEventListener('keypress', function(event) {
-    //* use 'event.which' for older browsers
-    if (event.keyCode === 13 || event.which === 13) {
-      ctrlAddItem();
-    }
-  });
 })(budgetController, UIController);
+
+controller.init();
