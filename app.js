@@ -106,16 +106,34 @@ var UIController = (function() {
     percentageLabel: '.budget__expenses--percentage',
   };
 
-  //* prevents direct access to DOMStrings object
+  var cacheDOM = {
+    inputType: document.querySelector(DOMStrings.inputType),
+    inputDescription: document.querySelector(DOMStrings.inputDescription),
+    inputValue: document.querySelector(DOMStrings.inputValue),
+    inputBtn: document.querySelector(DOMStrings.inputBtn),
+    incomeContainer: document.querySelector(DOMStrings.incomeContainer),
+    expenseContainer: document.querySelector(DOMStrings.expenseContainer),
+    budgetLabel: document.querySelector(DOMStrings.budgetLabel),
+    incomeLabel: document.querySelector(DOMStrings.incomeLabel),
+    expenseLabel: document.querySelector(DOMStrings.expenseLabel),
+    percentageLabel: document.querySelector(DOMStrings.percentageLabel),
+  };
+
+  //* provide non-direct access to DOMStrings object
   function getDOMStrings() {
     return DOMStrings;
   }
 
+  //* provide non-direct access to cacheDOM object
+  function getcacheDOM() {
+    return cacheDOM;
+  }
+
   function getInput() {
     return {
-      type: document.querySelector(DOMStrings.inputType).value,
-      description: document.querySelector(DOMStrings.inputDescription).value,
-      value: parseFloat(document.querySelector(DOMStrings.inputValue).value),
+      type: cacheDOM.inputType.value,
+      description: cacheDOM.inputDescription.value,
+      value: parseFloat(cacheDOM.inputValue.value),
     }; // type = 'inc' or 'exp'
   }
 
@@ -163,13 +181,14 @@ var UIController = (function() {
   }
 
   function clearFields() {
+    //* this could be much simpler and more direct
     var fields, fieldsArr;
 
     fields = document.querySelectorAll(DOMStrings.inputDescription + ', ' + DOMStrings.inputValue);
 
     fieldsArr = Array.prototype.slice.call(fields);
 
-    fieldsArr.forEach(function(field, index, array) {
+    fieldsArr.forEach(function(field) {
       field.value = '';
     });
 
@@ -177,18 +196,19 @@ var UIController = (function() {
   }
 
   function displayBudget(obj) {
-    document.querySelector(DOMStrings.budgetLabel).textContent = obj.budget.toFixed(2);
-    document.querySelector(DOMStrings.incomeLabel).textContent = '+ ' + obj.totalInc.toFixed(2);
-    document.querySelector(DOMStrings.expenseLabel).textContent = '- ' + obj.totalExp.toFixed(2);
+    cacheDOM.budgetLabel.textContent = obj.budget.toFixed(2);
+    cacheDOM.incomeLabel.textContent = '+ ' + obj.totalInc.toFixed(2);
+    cacheDOM.expenseLabel.textContent = '- ' + obj.totalExp.toFixed(2);
     if (obj.percentage > 0) {
-      document.querySelector(DOMStrings.percentageLabel).textContent = obj.percentage.toFixed(2) + '%';
+      cacheDOM.percentageLabel.textContent = obj.percentage + '%';
     } else {
-      document.querySelector(DOMStrings.percentageLabel).textContent = '---';
+      cacheDOM.percentageLabel.textContent = '---';
     }
   }
 
   return {
     getDOMStrings: getDOMStrings,
+    getcacheDOM: getcacheDOM,
     getInput: getInput,
     addListItem: addListItem,
     clearFields: clearFields,
@@ -202,15 +222,16 @@ var UIController = (function() {
 var controller = (function(budgetCtrl, UICtrl) {
   //* improved organization and debugging of similar code
   function setupEventListeners() {
-    var DOM = UICtrl.getDOMStrings();
-    var inputBtn = document.querySelector(DOM.inputBtn);
+    // var UI_DOM = UICtrl.getDOMStrings();
+    var UI_cacheDOM = UICtrl.getcacheDOM();
 
-    inputBtn.addEventListener('click', ctrlAddItem);
+    UI_cacheDOM.inputDescription.focus();
+    UI_cacheDOM.inputBtn.addEventListener('click', ctrlAddItem);
 
     //* 'ENTER' key can trigger input (except when the button is in focus, otherwise the function will fire twice)
     document.addEventListener('keypress', function(event) {
       //* use 'event.which' for older browsers
-      if ((event.keyCode === 13 || event.which === 13) && !(document.activeElement === inputBtn)) {
+      if ((event.keyCode === 13 || event.which === 13) && !(document.activeElement === UI_cacheDOM.inputBtn)) {
         ctrlAddItem();
       }
     });
