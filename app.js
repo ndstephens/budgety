@@ -63,6 +63,8 @@ var UIController = (function() {
     inputDescription: '.add__description',
     inputValue: '.add__value',
     inputBtn: '.add__btn',
+    incomeContainer: '.income__list',
+    expenseContainer: '.expenses__list',
   };
 
   //* prevents direct access to DOMStrings object
@@ -78,9 +80,53 @@ var UIController = (function() {
     };
   }
 
+  function addListItem(obj, type) {
+    var incomeHTML, expenseHTML, html, element;
+
+    incomeHTML = `<div class="item clearfix" id="income-${obj.id}">
+                    <div class="item__description">${obj.description}</div>
+                    <div class="right clearfix">
+                      <div class="item__value">${obj.value}</div>
+                      <div class="item__delete">
+                        <button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button>
+                      </div>
+                    </div>
+                  </div>`;
+
+    expenseHTML = `<div class="item clearfix" id="expense-${obj.id}">
+                    <div class="item__description">${obj.description}</div>
+                    <div class="right clearfix">
+                      <div class="item__value">${obj.value}</div>
+                      <div class="item__percentage">21%</div>
+                      <div class="item__delete">
+                        <button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button>
+                      </div>
+                    </div>
+                  </div>`;
+
+    // 1. Create HTML string with placeholder text
+    if (type === 'inc') {
+      html = incomeHTML;
+      element = DOMStrings.incomeContainer;
+    } else if (type === 'exp') {
+      html = expenseHTML;
+      element = DOMStrings.expenseContainer;
+    }
+
+    // 2. Replace placeholder text with some actual data
+    /* already done with template literal, however if strings were used, then instead of '${obj.id}' i could have written '%id%' as a placeholder.  then here could write
+    newHtml = html.replace('%id%', obj.id);  for example
+    */
+
+    // 3. Insert HTML into the DOM
+    //* 'element' and 'html' and dynamically defined above based on the 'type' argument given to the function
+    document.querySelector(element).insertAdjacentHTML('beforeend', html);
+  }
+
   return {
     getDOMStrings: getDOMStrings,
     getInput: getInput,
+    addListItem: addListItem,
   };
 })();
 
@@ -91,13 +137,14 @@ var controller = (function(budgetCtrl, UICtrl) {
   //* improved organization and debugging of similar code
   function setupEventListeners() {
     var DOM = UICtrl.getDOMStrings();
+    var inputBtn = document.querySelector(DOM.inputBtn);
 
-    document.querySelector(DOM.inputBtn).addEventListener('click', ctrlAddItem);
+    inputBtn.addEventListener('click', ctrlAddItem);
 
-    //* 'ENTER' key can trigger input (regardless of current focus)
+    //* 'ENTER' key can trigger input (except when the button is in focus, otherwise the function will fire twice)
     document.addEventListener('keypress', function(event) {
       //* use 'event.which' for older browsers
-      if (event.keyCode === 13 || event.which === 13) {
+      if ((event.keyCode === 13 || event.which === 13) && !(document.activeElement === inputBtn)) {
         ctrlAddItem();
       }
     });
@@ -109,12 +156,17 @@ var controller = (function(budgetCtrl, UICtrl) {
     // 1. Get input data
     input = UICtrl.getInput();
 
-    // 2. Add item to the budget controller
-    newItem = budgetCtrl.addItem(input.type, input.description, input.value);
+    //* validate existence of description and value
+    if (input.description && input.value) {
+      // 2. Add item to the budget controller
+      newItem = budgetCtrl.addItem(input.type, input.description, input.value);
 
-    // 3. Add item to the UI
-    // 4. Calculate the budget
-    // 5. Display the budget in the UI
+      // 3. Add item to the UI
+      UICtrl.addListItem(newItem, input.type);
+
+      // 4. Calculate the budget
+      // 5. Display the budget in the UI
+    }
   }
 
   function init() {
