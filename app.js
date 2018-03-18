@@ -1,4 +1,6 @@
+//?--------------------------------------
 //?--------- BUDGET CONTROLLER ----------
+//?--------------------------------------
 var budgetController = (function() {
   var Expense = function(id, description, value) {
     this.id = id;
@@ -11,12 +13,6 @@ var budgetController = (function() {
     this.description = description;
     this.value = value;
   };
-
-  function calculateTotal(type) {
-    data.totals[type] = data.allItems[type].reduce(function(acc, cur) {
-      return acc + cur.value;
-    }, 0);
-  }
 
   //* a condensed data structure
   var data = {
@@ -55,6 +51,12 @@ var budgetController = (function() {
     return newItem;
   }
 
+  function calculateTotal(type) {
+    data.totals[type] = data.allItems[type].reduce(function(acc, cur) {
+      return acc + cur.value;
+    }, 0);
+  }
+
   function calculateBudget() {
     // 1. Calculate total income and expenses
     calculateTotal('exp');
@@ -90,7 +92,9 @@ var budgetController = (function() {
 
 //
 //
+//?----------------------------------
 //?--------- UI CONTROLLER ----------
+//?----------------------------------
 var UIController = (function() {
   //* put all strings into one object.  it's easier to manage, and if string names change later, you don't need to find them throughout the app.  plus helps prevent misspellings, etc.
   var DOMStrings = {
@@ -104,6 +108,7 @@ var UIController = (function() {
     incomeLabel: '.budget__income--value',
     expenseLabel: '.budget__expenses--value',
     percentageLabel: '.budget__expenses--percentage',
+    container: '.container',
   };
 
   var cacheDOM = {
@@ -117,6 +122,7 @@ var UIController = (function() {
     incomeLabel: document.querySelector(DOMStrings.incomeLabel),
     expenseLabel: document.querySelector(DOMStrings.expenseLabel),
     percentageLabel: document.querySelector(DOMStrings.percentageLabel),
+    container: document.querySelector(DOMStrings.container),
   };
 
   //* provide non-direct access to DOMStrings object
@@ -140,7 +146,7 @@ var UIController = (function() {
   function addListItem(obj, type) {
     var incomeHTML, expenseHTML, html, element;
 
-    incomeHTML = `<div class="item clearfix" id="income-${obj.id}">
+    incomeHTML = `<div class="item clearfix" id="inc-${obj.id}">
                     <div class="item__description">${obj.description}</div>
                     <div class="right clearfix">
                       <div class="item__value">${obj.value}</div>
@@ -150,7 +156,7 @@ var UIController = (function() {
                     </div>
                   </div>`;
 
-    expenseHTML = `<div class="item clearfix" id="expense-${obj.id}">
+    expenseHTML = `<div class="item clearfix" id="exp-${obj.id}">
                     <div class="item__description">${obj.description}</div>
                     <div class="right clearfix">
                       <div class="item__value">${obj.value}</div>
@@ -218,7 +224,9 @@ var UIController = (function() {
 
 //
 //
+//?-----------------------------------
 //?--------- APP CONTROLLER ----------
+//?-----------------------------------
 var controller = (function(budgetCtrl, UICtrl) {
   //* improved organization and debugging of similar code
   function setupEventListeners() {
@@ -235,6 +243,9 @@ var controller = (function(budgetCtrl, UICtrl) {
         ctrlAddItem();
       }
     });
+
+    //* EVENT DELEGATION, add event to container, but listen for the specific target (when clicking on each item's delete button)
+    UI_cacheDOM.container.addEventListener('click', ctrlDeleteItem);
   }
 
   function updateBudget() {
@@ -267,6 +278,33 @@ var controller = (function(budgetCtrl, UICtrl) {
       // 5. Calc and update budget
       updateBudget();
     }
+  }
+
+  function ctrlDeleteItem(event) {
+    var el, splitID, type, ID;
+
+    el = event.target;
+    //* first check whether the close icon or its parent button element were the target
+    if (el.classList.contains('item__delete--btn') || el.parentNode.classList.contains('item__delete--btn')) {
+      while (!el.id && (!el.id.startsWith('inc-') || !el.id.startsWith('exp-'))) {
+        el = el.parentNode;
+        if (el === document) {
+          break;
+        }
+      }
+      if (el.id) {
+        splitID = el.id.split('-');
+        type = splitID[0];
+        ID = splitID[1];
+      }
+    }
+
+    console.log(splitID);
+
+    // 1. Delete item from data structure
+    // 2. Delete item from UI
+    // 3. Update and display the budget
+    // 4. Clear splitID
   }
 
   function init() {
