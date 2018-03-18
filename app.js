@@ -74,8 +74,8 @@ var budgetController = (function() {
   function getBudget() {
     return {
       budget: data.budget,
-      totalIncome: data.totals.inc,
-      totalExpenses: data.totals.exp,
+      totalInc: data.totals.inc,
+      totalExp: data.totals.exp,
       percentage: data.percentage,
     };
   }
@@ -100,6 +100,10 @@ var UIController = (function() {
     inputBtn: '.add__btn',
     incomeContainer: '.income__list',
     expenseContainer: '.expenses__list',
+    budgetLabel: '.budget__value',
+    incomeLabel: '.budget__income--value',
+    expenseLabel: '.budget__expenses--value',
+    percentageLabel: '.budget__expenses--percentage',
   };
 
   //* prevents direct access to DOMStrings object
@@ -172,11 +176,23 @@ var UIController = (function() {
     fieldsArr[0].focus(); // put focus back on the description field
   }
 
+  function displayBudget(obj) {
+    document.querySelector(DOMStrings.budgetLabel).textContent = obj.budget.toFixed(2);
+    document.querySelector(DOMStrings.incomeLabel).textContent = '+ ' + obj.totalInc.toFixed(2);
+    document.querySelector(DOMStrings.expenseLabel).textContent = '- ' + obj.totalExp.toFixed(2);
+    if (obj.percentage > 0) {
+      document.querySelector(DOMStrings.percentageLabel).textContent = obj.percentage.toFixed(2) + '%';
+    } else {
+      document.querySelector(DOMStrings.percentageLabel).textContent = '---';
+    }
+  }
+
   return {
     getDOMStrings: getDOMStrings,
     getInput: getInput,
     addListItem: addListItem,
     clearFields: clearFields,
+    displayBudget: displayBudget,
   };
 })();
 
@@ -207,7 +223,7 @@ var controller = (function(budgetCtrl, UICtrl) {
     // 2. Return the budget
     budget = budgetCtrl.getBudget();
     // 3. Display the budget in the UI
-    console.log(budget);
+    UICtrl.displayBudget(budget);
   }
 
   function ctrlAddItem() {
@@ -234,6 +250,12 @@ var controller = (function(budgetCtrl, UICtrl) {
 
   function init() {
     setupEventListeners();
+    UICtrl.displayBudget({
+      budget: 0,
+      totalInc: 0,
+      totalExp: 0,
+      percentage: -1,
+    });
   }
 
   return {
