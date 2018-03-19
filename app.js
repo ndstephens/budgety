@@ -51,7 +51,15 @@ var budgetController = (function() {
     return newItem;
   }
 
-  function calculateTotal(type) {
+  function deleteItem(type, id) {
+    //* id is a string, so using == type coercion (or could change to a number)
+    var index = data.allItems[type].findIndex(item => item.id == id);
+    if (index >= 0) {
+      data.allItems[type].splice(index, 1);
+    }
+  }
+
+  function _calculateTotal(type) {
     data.totals[type] = data.allItems[type].reduce(function(acc, cur) {
       return acc + cur.value;
     }, 0);
@@ -59,14 +67,14 @@ var budgetController = (function() {
 
   function calculateBudget() {
     // 1. Calculate total income and expenses
-    calculateTotal('exp');
-    calculateTotal('inc');
+    _calculateTotal('exp');
+    _calculateTotal('inc');
 
     // 2. Calculate the budget: income - expenses
     data.budget = data.totals.inc - data.totals.exp;
 
     // 3. Calculate the percentage of income that was spent
-    if (data.totals.inc > 0) {
+    if (data.budget > 0) {
       data.percentage = Math.round(data.totals.exp / data.totals.inc * 100);
     } else {
       data.percentage = -1;
@@ -84,9 +92,10 @@ var budgetController = (function() {
 
   return {
     addItem: addItem,
+    deleteItem: deleteItem,
     calculateBudget: calculateBudget,
     getBudget: getBudget,
-    testData: data, //! TEMPORARY FOR TESTING
+    testData: data, // TODO: TEMPORARY FOR TESTING
   };
 })();
 
@@ -186,8 +195,13 @@ var UIController = (function() {
     document.querySelector(element).insertAdjacentHTML('beforeend', html);
   }
 
+  function deleteListItem(elementID) {
+    var el = document.querySelector('#' + elementID);
+    el.parentNode.removeChild(el);
+  }
+
   function clearFields() {
-    //* this could be much simpler and more direct
+    //* this could be MUCH simpler and more direct
     var fields, fieldsArr;
 
     fields = document.querySelectorAll(DOMStrings.inputDescription + ', ' + DOMStrings.inputValue);
@@ -201,6 +215,7 @@ var UIController = (function() {
     fieldsArr[0].focus(); // put focus back on the description field
   }
 
+  //* 'obj' is the returned object of budgetController.getBudget
   function displayBudget(obj) {
     cacheDOM.budgetLabel.textContent = obj.budget.toFixed(2);
     cacheDOM.incomeLabel.textContent = '+ ' + obj.totalInc.toFixed(2);
@@ -217,6 +232,7 @@ var UIController = (function() {
     getcacheDOM: getcacheDOM,
     getInput: getInput,
     addListItem: addListItem,
+    deleteListItem: deleteListItem,
     clearFields: clearFields,
     displayBudget: displayBudget,
   };
@@ -284,7 +300,7 @@ var controller = (function(budgetCtrl, UICtrl) {
     var el, splitID, type, ID;
 
     el = event.target;
-    //* first check whether the close icon or its parent button element were the target
+    //* first check whether the delete icon or its parent button element were the target
     if (el.classList.contains('item__delete--btn') || el.parentNode.classList.contains('item__delete--btn')) {
       while (!el.id && (!el.id.startsWith('inc-') || !el.id.startsWith('exp-'))) {
         el = el.parentNode;
@@ -296,15 +312,17 @@ var controller = (function(budgetCtrl, UICtrl) {
         splitID = el.id.split('-');
         type = splitID[0];
         ID = splitID[1];
+
+        // 1. Delete item from data structure
+        budgetCtrl.deleteItem(type, ID);
+        // 2. Delete item from UI
+        UICtrl.deleteListItem(el.id);
+        // 3. Update and display the budget
+        updateBudget();
+        // 4. Clear splitID
+        splitID = [];
       }
     }
-
-    console.log(splitID);
-
-    // 1. Delete item from data structure
-    // 2. Delete item from UI
-    // 3. Update and display the budget
-    // 4. Clear splitID
   }
 
   function init() {
