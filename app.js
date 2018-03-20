@@ -141,6 +141,7 @@ var UIController = (function() {
     percentageLabel: '.budget__expenses--percentage',
     container: '.container',
     expPercentLabel: '.item__percentage',
+    dateLabel: '.budget__title--month',
   };
 
   var _cacheDOM = {
@@ -155,7 +156,37 @@ var UIController = (function() {
     expenseLabel: document.querySelector(_DOMStrings.expenseLabel),
     percentageLabel: document.querySelector(_DOMStrings.percentageLabel),
     container: document.querySelector(_DOMStrings.container),
+    dateLabel: document.querySelector(_DOMStrings.dateLabel),
   };
+
+  function _formatNumber(num, type) {
+    // + or - , 2 decimals, comma separation
+    var _num, _type;
+
+    _num = Math.abs(num).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    //* check the number sign to get its type if 'type' isn't given, available, or if value is calculated (used primarily for the main Budget number since its value is calculated and can be '0' or negative)
+    function checkType(num) {
+      if (Math.sign(num) === 1) {
+        return 'inc';
+      } else if (Math.sign(num) === -1) {
+        return 'exp';
+      } else if (Math.sign(num) === 0 || -0) {
+        return '';
+      }
+    }
+
+    //* use 'type' if given, otherwise use function to find 'type'
+    _type = type || checkType(num);
+
+    if (_type === 'inc') {
+      return '+ ' + _num;
+    } else if (_type === 'exp') {
+      return '- ' + _num;
+    } else {
+      return _num; //* no sign if '0'
+    }
+  }
 
   //* provide non-direct access to _DOMStrings object
   function getDOMStrings() {
@@ -264,31 +295,13 @@ var UIController = (function() {
     });
   }
 
-  function _formatNumber(num, type) {
-    // + or - , 2 decimals, comma separation
-    var _num = Math.abs(num).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  function displayMonth() {
+    var formattedDate = new Date().toLocaleDateString('en-US', {
+      month: 'long',
+      year: 'numeric',
+    });
 
-    //* check the number sign to get its type if 'type' isn't given, available, or if value is calculated (used primarily for the main Budget number since its value is calculated and can be '0' or negative)
-    function checkType(num) {
-      if (Math.sign(num) === 1) {
-        return 'inc';
-      } else if (Math.sign(num) === -1) {
-        return 'exp';
-      } else if (Math.sign(num) === 0 || -0) {
-        return '';
-      }
-    }
-
-    //* use 'type' if given, otherwise use function to find 'type'
-    var _type = type || checkType(num);
-
-    if (_type === 'inc') {
-      return '+ ' + _num;
-    } else if (_type === 'exp') {
-      return '- ' + _num;
-    } else {
-      return _num; //* no sign if '0'
-    }
+    _cacheDOM.dateLabel.textContent = formattedDate;
   }
 
   return {
@@ -300,6 +313,7 @@ var UIController = (function() {
     clearFields: clearFields,
     displayBudget: displayBudget,
     displayPercentages: displayPercentages,
+    displayMonth: displayMonth,
   };
 })();
 
@@ -406,6 +420,7 @@ var controller = (function(budgetCtrl, UICtrl) {
 
   function init() {
     _setupEventListeners();
+    UICtrl.displayMonth();
     UICtrl.displayBudget({
       budget: 0,
       totalInc: 0,
