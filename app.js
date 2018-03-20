@@ -181,7 +181,7 @@ var UIController = (function() {
     incomeHTML = `<div class="item clearfix" id="inc-${obj.id}">
                     <div class="item__description">${obj.description}</div>
                     <div class="right clearfix">
-                      <div class="item__value">${obj.value}</div>
+                      <div class="item__value">${_formatNumber(obj.value, type)}</div>
                       <div class="item__delete">
                         <button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button>
                       </div>
@@ -191,7 +191,7 @@ var UIController = (function() {
     expenseHTML = `<div class="item clearfix" id="exp-${obj.id}">
                     <div class="item__description">${obj.description}</div>
                     <div class="right clearfix">
-                      <div class="item__value">${obj.value}</div>
+                      <div class="item__value">${_formatNumber(obj.value, type)}</div>
                       <div class="item__percentage">21%</div>
                       <div class="item__delete">
                         <button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button>
@@ -240,9 +240,9 @@ var UIController = (function() {
 
   //* 'obj' is the returned object of budgetController.getBudget
   function displayBudget(obj) {
-    _cacheDOM.budgetLabel.textContent = obj.budget;
-    _cacheDOM.incomeLabel.textContent = obj.totalInc;
-    _cacheDOM.expenseLabel.textContent = obj.totalExp;
+    _cacheDOM.budgetLabel.textContent = _formatNumber(obj.budget);
+    _cacheDOM.incomeLabel.textContent = _formatNumber(obj.totalInc, 'inc');
+    _cacheDOM.expenseLabel.textContent = _formatNumber(obj.totalExp, 'exp');
     if (obj.percentage > 0) {
       _cacheDOM.percentageLabel.textContent = obj.percentage + '%';
     } else {
@@ -262,6 +262,33 @@ var UIController = (function() {
     nodeListForEach(fields, function(expElement, index) {
       expElement.textContent = percentageArray[index] > 0 ? percentageArray[index] + '%' : '---';
     });
+  }
+
+  function _formatNumber(num, type) {
+    // + or - , 2 decimals, comma separation
+    var _num = Math.abs(num).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    //* check the number sign to get its type if 'type' isn't given, available, or if value is calculated (used primarily for the main Budget number since its value is calculated and can be '0' or negative)
+    function checkType(num) {
+      if (Math.sign(num) === 1) {
+        return 'inc';
+      } else if (Math.sign(num) === -1) {
+        return 'exp';
+      } else if (Math.sign(num) === 0 || -0) {
+        return '';
+      }
+    }
+
+    //* use 'type' if given, otherwise use function to find 'type'
+    var _type = type || checkType(num);
+
+    if (_type === 'inc') {
+      return '+ ' + _num;
+    } else if (_type === 'exp') {
+      return '- ' + _num;
+    } else {
+      return _num; //* no sign if '0'
+    }
   }
 
   return {
