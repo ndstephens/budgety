@@ -159,6 +159,7 @@ var UIController = (function() {
     dateLabel: document.querySelector(_DOMStrings.dateLabel),
   };
 
+  //? --- PRIVATE FUNCTIONS START ---
   function _formatNumber(num, type) {
     // + or - , 2 decimals, comma separation
     var _num, _type;
@@ -188,6 +189,12 @@ var UIController = (function() {
     }
   }
 
+  function _nodeListForEach(nodeList, callback) {
+    for (let i = 0; i < nodeList.length; i++) {
+      callback(nodeList[i], i);
+    }
+  }
+
   //* provide non-direct access to _DOMStrings object
   function getDOMStrings() {
     return _DOMStrings;
@@ -197,6 +204,7 @@ var UIController = (function() {
   function getcacheDOM() {
     return _cacheDOM;
   }
+  //? --- PRIVATE FUNCTIONS END ---
 
   function getInput() {
     return {
@@ -284,13 +292,7 @@ var UIController = (function() {
   function displayPercentages(percentageArray) {
     var fields = document.querySelectorAll(_DOMStrings.expPercentLabel);
 
-    function nodeListForEach(nodeList, callback) {
-      for (let i = 0; i < nodeList.length; i++) {
-        callback(nodeList[i], i);
-      }
-    }
-
-    nodeListForEach(fields, function(expElement, index) {
+    _nodeListForEach(fields, function(expElement, index) {
       expElement.textContent = percentageArray[index] > 0 ? percentageArray[index] + '%' : '---';
     });
   }
@@ -304,6 +306,20 @@ var UIController = (function() {
     _cacheDOM.dateLabel.textContent = formattedDate;
   }
 
+  function changedType() {
+    var fields = document.querySelectorAll(`
+      ${_DOMStrings.inputType}, 
+      ${_DOMStrings.inputDescription},
+      ${_DOMStrings.inputValue}
+    `);
+
+    _nodeListForEach(fields, function(cur) {
+      cur.classList.toggle('red-focus');
+    });
+
+    _cacheDOM.inputBtn.classList.toggle('red');
+  }
+
   return {
     getDOMStrings: getDOMStrings,
     getcacheDOM: getcacheDOM,
@@ -314,6 +330,7 @@ var UIController = (function() {
     displayBudget: displayBudget,
     displayPercentages: displayPercentages,
     displayMonth: displayMonth,
+    changedType: changedType,
   };
 })();
 
@@ -341,6 +358,9 @@ var controller = (function(budgetCtrl, UICtrl) {
 
     //* EVENT DELEGATION, add event to container, but listen for the specific target (when clicking on each item's delete button)
     UI_cacheDOM.container.addEventListener('click', _ctrlDeleteItem);
+
+    //* change event on input type ('inc' or 'exp') which will change all the inputs' border color, and the button's color
+    UI_cacheDOM.inputType.addEventListener('change', UICtrl.changedType);
   }
 
   function _updateBudget() {
