@@ -1,2 +1,7 @@
-# budgety
-vanilla JS to-do type app
+# Budgety
+
+## Barebones Todo App written in vanilla JS
+
+<br>
+
+![ss](screen-shot.png)
